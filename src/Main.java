@@ -19,8 +19,7 @@ class Network {
     private static int answer;
 
     private void inReadInt() {
-        while(true) {
-            try {
+        try {
                 byte[] buf = new byte[2000];
                 int count = in.read(buf);
                 ByteBuffer bb = ByteBuffer.wrap(buf, 0, count);
@@ -35,15 +34,11 @@ class Network {
                 } catch (Exception e2) {
                     System.out.println(e2);
                 }
-                break;
-
             }
-        }
     }
 
     private void outWriteInt(int res) {
-        while(true) {
-            try {
+		try {
                 byte[] buf = new byte[1000];
                 buf = ByteBuffer.allocate(4).putInt(res).array();
                 out.write(buf);
@@ -57,9 +52,7 @@ class Network {
                 } catch (Exception e2) {
                     System.out.println(e2);
                 }
-                break;
             }
-        }
     }
 
     public void work() {
