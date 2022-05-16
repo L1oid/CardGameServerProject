@@ -2,6 +2,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 
 public class Main {
     public static void main (String[]args){
@@ -11,19 +12,41 @@ public class Main {
 }
 
 class Network {
-    Socket s;
-    ServerSocket ss;
-    InputStream in;
-    OutputStream out;
-    static String answer;
-    public void workWithString() {
+    private Socket s;
+    private ServerSocket ss;
+    private InputStream in;
+    private OutputStream out;
+    private static int answer;
+
+    private void inReadInt() {
         while(true) {
             try {
                 byte[] buf = new byte[2000];
                 int count = in.read(buf);
-                String word = new String(buf, 0, count);
-                //answer = бла бла бла;
-                out.write(answer.getBytes());
+                ByteBuffer bb = ByteBuffer.wrap(buf, 0, count);
+                answer = bb.getInt();
+            } catch (Exception e) {
+                System.out.println(e);
+                try {
+                    in.close();
+                    out.close();
+                    s.close();
+                    System.out.println("Close");
+                } catch (Exception e2) {
+                    System.out.println(e2);
+                }
+                break;
+
+            }
+        }
+    }
+
+    private void outWriteInt(int res) {
+        while(true) {
+            try {
+                byte[] buf = new byte[1000];
+                buf = ByteBuffer.allocate(4).putInt(res).array();
+                out.write(buf);
             } catch (Exception e) {
                 System.out.println(e);
                 try {
@@ -56,7 +79,9 @@ class Network {
             } catch (Exception e) {
                 System.out.println(e);
             }
-            workWithString();
+            inReadInt();
+            answer++;
+            outWriteInt(answer);
         }
     }
 }
