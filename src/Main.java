@@ -20,39 +20,39 @@ class Network {
 
     private void inReadInt() {
         try {
-                byte[] buf = new byte[2000];
-                int count = in.read(buf);
-                ByteBuffer bb = ByteBuffer.wrap(buf, 0, count);
-                answer = bb.getInt();
-            } catch (Exception e) {
-                System.out.println(e);
-                try {
-                    in.close();
-                    out.close();
-                    s.close();
-                    System.out.println("Close");
-                } catch (Exception e2) {
-                    System.out.println(e2);
-                }
+            byte[] buf = new byte[2000];
+            int count = in.read(buf);
+            ByteBuffer bb = ByteBuffer.wrap(buf, 0, count);
+            answer = bb.getInt();
+        } catch (Exception e) {
+            System.out.println(e);
+            try {
+                in.close();
+                out.close();
+                s.close();
+                System.out.println("Close");
+            } catch (Exception e2) {
+                System.out.println(e2);
             }
+        }
     }
 
     private void outWriteInt(int res) {
 		try {
-                byte[] buf = new byte[1000];
-                buf = ByteBuffer.allocate(4).putInt(res).array();
-                out.write(buf);
-            } catch (Exception e) {
-                System.out.println(e);
-                try {
-                    in.close();
-                    out.close();
-                    s.close();
-                    System.out.println("Close");
-                } catch (Exception e2) {
-                    System.out.println(e2);
-                }
+            byte[] buf = new byte[1000];
+            buf = ByteBuffer.allocate(4).putInt(res).array();
+            out.write(buf);
+        } catch (Exception e) {
+            System.out.println(e);
+            try {
+                in.close();
+                out.close();
+                s.close();
+                System.out.println("Close");
+            } catch (Exception e2) {
+                System.out.println(e2);
             }
+        }
     }
 
     public void work() {
