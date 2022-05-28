@@ -3,13 +3,21 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.sql.Connection;
+import java.util.ArrayList;
+
 import database.Card;
 import database.Database;
+import database.Const;
+
+
 
 public class Main {
     public static void main (String[]args) {
-        new NewThread(1, 1111);
-        new NewThread(2, 1112);
+        Database database = new Database("postgres", "system");
+        Connection con = database.getConnection();
+        new NewThread(1, 5001);
+        new NewThread(2, 5002);
     }
 }
 
@@ -18,14 +26,15 @@ class Network {
     private ServerSocket ss;
     private InputStream in;
     private OutputStream out;
-    private static int answer;
+    private static int answerInt;
+    private static String answerString;
 
     private void inReadInt() {
         try {
             byte[] buf = new byte[2000];
             int count = in.read(buf);
             ByteBuffer bb = ByteBuffer.wrap(buf, 0, count);
-            answer = bb.getInt();
+            answerInt = bb.getInt();
         } catch (Exception e) {
             e.printStackTrace();
             try {
@@ -57,6 +66,40 @@ class Network {
         }
     }
 
+    private void inReadSting() {
+        try {
+            byte[] buf = new byte[2000];
+            int count = in.read(buf);
+            answerString = new String(buf, 0, count);
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+                in.close();
+                out.close();
+                s.close();
+                System.out.println("Close");
+            } catch (Exception e2) {
+                e2.printStackTrace();
+            }
+        }
+    }
+
+    private void outWriteString(String res) {
+        try {
+            out.write(res.getBytes());
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+                in.close();
+                out.close();
+                s.close();
+                System.out.println("Close");
+            } catch (Exception e2) {
+                e2.printStackTrace();
+            }
+        }
+    }
+
     public void work(int socket) {
         try {
             ss = new ServerSocket(socket);
@@ -74,9 +117,19 @@ class Network {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            inReadInt();
-            answer++;
-            outWriteInt(answer);
+            try {
+                ArrayList<String> cards;
+                cards = Card.getCard();
+                outWriteInt(cards.size());
+                for (int i = 0; i < cards.size(); i++) {
+                    Thread.sleep(Const.DELAY);
+                    System.out.println(cards.get(i));
+                    outWriteString(cards.get(i));
+                    System.out.println("Iteration: " + i);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }
@@ -97,7 +150,7 @@ class NewThread implements Runnable {
         try {
             Network network = new Network();
             network.work(socket);
-            Thread.sleep(1000);
+            Thread.sleep(Const.DELAY);
         } catch (InterruptedException e) {
             System.out.println("Поток прерван.");
         }
