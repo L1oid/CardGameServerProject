@@ -5,9 +5,9 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 
 public class Main {
-    public static void main (String[]args){
-        Network network = new Network();
-        network.work();
+    public static void main (String[]args) {
+        new NewThread(1, 1111);
+        new NewThread(2, 1112);
     }
 }
 
@@ -55,9 +55,9 @@ class Network {
         }
     }
 
-    public void work() {
+    public void work(int socket) {
         try {
-            ss = new ServerSocket(1111);
+            ss = new ServerSocket(socket);
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -75,6 +75,29 @@ class Network {
             inReadInt();
             answer++;
             outWriteInt(answer);
+        }
+    }
+}
+
+class NewThread implements Runnable {
+    Thread t;
+
+    int socket;
+    int id;
+    NewThread(int id_p, int socket_p) {
+        id = id_p;
+        socket = socket_p;
+        t = new Thread(this, "Поток" + id);
+        System.out.println("Поток создан: " + t);
+        t.start();
+    }
+    public void run() {
+        try {
+            Network network = new Network();
+            network.work(socket);
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            System.out.println("Поток прерван.");
         }
     }
 }
