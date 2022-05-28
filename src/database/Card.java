@@ -68,11 +68,9 @@ public class Card {
         action_id = action_id_p;
     }
 
-    public static Card getCards(String id_p) throws SQLException {
+    public static Card getCard(String id_p) throws SQLException {
         ResultSet rs;
-        String query = "select id, name, description, color_id, price, action_id " +
-                       "from card " +
-                       "where id = " + id_p + ";";
+        String query = "select * from card where id = " + id_p + ";";
         rs = Database.exeQuery(query);
         return new Card(rs.getInt("id"), rs.getString("name"),
                         rs.getString("description"), rs.getInt("color_id"),
