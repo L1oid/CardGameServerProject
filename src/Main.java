@@ -3,6 +3,8 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import database.Card;
+import database.Database;
 
 public class Main {
     public static void main (String[]args) {
@@ -25,14 +27,14 @@ class Network {
             ByteBuffer bb = ByteBuffer.wrap(buf, 0, count);
             answer = bb.getInt();
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
             try {
                 in.close();
                 out.close();
                 s.close();
                 System.out.println("Close");
             } catch (Exception e2) {
-                System.out.println(e2);
+                e2.printStackTrace();
             }
         }
     }
@@ -43,14 +45,14 @@ class Network {
             buf = ByteBuffer.allocate(4).putInt(res).array();
             out.write(buf);
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
             try {
                 in.close();
                 out.close();
                 s.close();
                 System.out.println("Close");
             } catch (Exception e2) {
-                System.out.println(e2);
+                e2.printStackTrace();
             }
         }
     }
@@ -59,7 +61,7 @@ class Network {
         try {
             ss = new ServerSocket(socket);
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
         }
         while (true) {
             try {
@@ -70,7 +72,7 @@ class Network {
                 in = s.getInputStream();
                 out = s.getOutputStream();
             } catch (Exception e) {
-                System.out.println(e);
+                e.printStackTrace();
             }
             inReadInt();
             answer++;
@@ -81,7 +83,6 @@ class Network {
 
 class NewThread implements Runnable {
     Thread t;
-
     int socket;
     int id;
     NewThread(int id_p, int socket_p) {
@@ -91,6 +92,7 @@ class NewThread implements Runnable {
         System.out.println("Поток создан: " + t);
         t.start();
     }
+
     public void run() {
         try {
             Network network = new Network();
