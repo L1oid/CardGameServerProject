@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import database.Card;
 import database.Database;
 import database.Const;
-
+import database.GameUser;
 
 
 public class Main {
@@ -66,7 +66,7 @@ class Network {
         }
     }
 
-    private void inReadSting() {
+    private void inReadString() {
         try {
             byte[] buf = new byte[2000];
             int count = in.read(buf);
@@ -117,22 +117,44 @@ class Network {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            try {
-                ArrayList<String> cards;
-                cards = Card.getCard();
-                outWriteInt(cards.size());
-                for (int i = 0; i < cards.size(); i++) {
-                    Thread.sleep(Const.DELAY);
-                    System.out.println(cards.get(i));
-                    outWriteString(cards.get(i));
-                    System.out.println("Iteration: " + i);
+            inReadInt();
+            int status = answerInt;
+            inReadString();
+            String login = answerString;
+            System.out.println(login);
+            inReadString();
+            String password = answerString;
+            System.out.println(password);
+            if (status == Const.REGISTRATION) {
+                GameUser.registration(login, password);
+            }
+            else if (status == Const.LOGIN) {
+                int result = GameUser.login(login, password);
+                outWriteInt(result);
+                if (result == Const.INVALID_LOGIN || result == Const.WRONG_PASSWORD) {
+                    try {
+                        in.close();
+                        out.close();
+                        s.close();
+                        System.out.println("Close");
+                    } catch (Exception e2) {
+                        e2.printStackTrace();
+                    }
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         }
     }
 }
+
+/*
+                        ArrayList<String> cards;
+                        cards = Card.getCard();
+                        outWriteInt(cards.size());
+                        for (int i = 0; i < cards.size(); i++) {
+                            Thread.sleep(Const.DELAY);
+                            System.out.println(cards.get(i));
+                            outWriteString(cards.get(i));
+                            System.out.println("Iteration: " + i);*/
 
 class NewThread implements Runnable {
     Thread t;
