@@ -4,7 +4,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-
 public class Card {
     public static ArrayList<String> getCard() throws SQLException {
         ArrayList<String> cards = new ArrayList<>();

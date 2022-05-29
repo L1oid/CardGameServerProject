@@ -7,15 +7,16 @@ import java.sql.Connection;
 import java.util.ArrayList;
 
 import database.Card;
+import database.Unit;
 import database.Database;
 import database.Const;
 import database.GameUser;
-
 
 public class Main {
     public static void main (String[]args) {
         Database database = new Database("postgres", "system");
         Connection con = database.getConnection();
+        Info info = Info.getInstance();
         new NewThread(1, 5001);
         new NewThread(2, 5002);
     }
@@ -26,8 +27,13 @@ class Network {
     private ServerSocket ss;
     private InputStream in;
     private OutputStream out;
-    private static int answerInt;
-    private static String answerString;
+    private int answerInt;
+    private String answerString;
+    private int status;
+
+    public Network() {
+        status = 0;
+    }
 
     private void inReadInt() {
         try {
@@ -117,22 +123,62 @@ class Network {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            inReadInt();
-            int status = answerInt;
-            inReadString();
-            String login = answerString;
-            System.out.println(login);
-            inReadString();
-            String password = answerString;
-            System.out.println(password);
-            if (status == Const.REGISTRATION) {
-                GameUser.registration(login, password);
+            System.out.println("Status: " + status);
+            if(status == 0) {
+                inReadInt();
+                int status_act = answerInt;
+                outWriteInt(1);
+                if (status_act == Const.REGISTRATION || status_act == Const.LOGIN) {
+                    inReadString();
+                    String login = answerString;
+                    System.out.println(login);
+                    outWriteInt(1);
+                    inReadString();
+                    String password = answerString;
+                    System.out.println(password);
+                    if (status_act == Const.REGISTRATION) {
+                        int result = GameUser.registration(login, password);
+                        if (result == Const.SUCCESS_REGISTRATION) {
+                            status = 1;
+                            outWriteInt(result);
+                        }
+                        else {
+                            outWriteInt(result);
+                            status = 0;
+                        }
+                    }
+                    else if (status_act == Const.LOGIN) {
+                        int result = GameUser.login(login, password);
+                        if (result == Const.INVALID_LOGIN || result == Const.WRONG_PASSWORD) {
+                            try {
+                                status = 0;
+                                in.close();
+                                out.close();
+                                s.close();
+                                System.out.println("Close");
+                            } catch (Exception e2) {
+                                e2.printStackTrace();
+                            }
+                        }
+                        else {
+                            try {
+                                outWriteInt(result);
+                                inReadInt();
+                                outWriteString(GameUser.getWinsAndLoses(login));
+                                status = 1;
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                } else outWriteInt(0);
             }
-            else if (status == Const.LOGIN) {
-                int result = GameUser.login(login, password);
-                outWriteInt(result);
-                if (result == Const.INVALID_LOGIN || result == Const.WRONG_PASSWORD) {
+            else {
+                inReadInt();
+                int status_act = answerInt;
+                if (status_act == Const.EXIT) {
                     try {
+                        status = 0;
                         in.close();
                         out.close();
                         s.close();
@@ -141,20 +187,87 @@ class Network {
                         e2.printStackTrace();
                     }
                 }
+                if (status_act == Const.GET_CARDS) {
+                    try {
+                        ArrayList<String> cards;
+                        cards = Card.getCard();
+                        outWriteInt(cards.size());
+                        for (int i = 0; i < cards.size(); i++) {
+                            System.out.println(cards.get(i));
+                            outWriteString(cards.get(i));
+                            System.out.println("Iteration: " + i);
+                            inReadInt();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                else if (status_act == Const.GET_UNITS) {
+                    try {
+                        ArrayList<String> units;
+                        units = Unit.getUnit();
+                        outWriteInt(units.size());
+                        for (int i = 0; i < units.size(); i++) {
+                            System.out.println(units.get(i));
+                            outWriteString(units.get(i));
+                            System.out.println("Iteration: " + i);
+                            inReadInt();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                else if (status_act == Const.SEND_PLAYER_ACTION) {
+                    System.out.println(Thread.currentThread().getName());
+                    outWriteInt(1);
+                    inReadString();
+                    Info info = Info.getInstance();
+                    info.sendInfo(Thread.currentThread().getName(), answerString);
+                }
+                else if (status_act == Const.GET_PLAYER_ACTION) {
+                    Info info = Info.getInstance();
+                    String res = info.getInfo(Thread.currentThread().getName());
+                    outWriteString(res);
+                }
+                else if (status_act != Const.EXIT) {
+                    outWriteInt(-1);
+                }
             }
         }
     }
 }
 
-/*
-                        ArrayList<String> cards;
-                        cards = Card.getCard();
-                        outWriteInt(cards.size());
-                        for (int i = 0; i < cards.size(); i++) {
-                            Thread.sleep(Const.DELAY);
-                            System.out.println(cards.get(i));
-                            outWriteString(cards.get(i));
-                            System.out.println("Iteration: " + i);*/
+class Info {
+    public String str1;
+    public String str2;
+    private static Info instance;
+    private Info() {};
+    public static Info getInstance() {
+        if(instance == null) {
+            instance = new Info();
+        }
+        return instance;
+    }
+
+    public String getInfo(String name) {
+        if (name.equals("Поток1")) {
+            return str2;
+        }
+        else if (name.equals("Поток2")) {
+            return str1;
+        }
+        return "-1";
+    }
+
+    public void sendInfo(String name, String str_p) {
+        if (name.equals("Поток1")) {
+            str1 = str_p;
+        }
+        else if (name.equals("Поток2")) {
+            str2 = str_p;
+        }
+    }
+}
 
 class NewThread implements Runnable {
     Thread t;
@@ -169,12 +282,7 @@ class NewThread implements Runnable {
     }
 
     public void run() {
-        try {
-            Network network = new Network();
-            network.work(socket);
-            Thread.sleep(Const.DELAY);
-        } catch (InterruptedException e) {
-            System.out.println("Поток прерван.");
-        }
+        Network network = new Network();
+        network.work(socket);
     }
 }
