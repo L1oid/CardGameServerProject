@@ -14,7 +14,7 @@ import database.GameUser;
 
 public class Main {
     public static void main (String[]args) {
-        Database database = new Database("postgres", "system");
+        Database database = new Database("postgres", "12345");
         Connection con = database.getConnection();
         Info info = Info.getInstance();
         new NewThread(1, 5001);
@@ -30,6 +30,8 @@ class Network {
     private int answerInt;
     private String answerString;
     private int status;
+
+    private String curLogin;
 
     public Network() {
         status = 0;
@@ -140,6 +142,7 @@ class Network {
                         int result = GameUser.registration(login, password);
                         if (result == Const.SUCCESS_REGISTRATION) {
                             status = 1;
+                            curLogin = login;
                             outWriteInt(result);
                         }
                         else {
@@ -151,6 +154,7 @@ class Network {
                         int result = GameUser.login(login, password);
                         if (result == Const.INVALID_LOGIN || result == Const.WRONG_PASSWORD) {
                             try {
+                                outWriteInt(result);
                                 status = 0;
                                 in.close();
                                 out.close();
@@ -162,10 +166,11 @@ class Network {
                         }
                         else {
                             try {
+                                curLogin = login;
                                 outWriteInt(result);
-                                inReadInt();
-                                outWriteString(GameUser.getWinsAndLoses(login));
                                 status = 1;
+                                inReadInt();
+
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -187,7 +192,7 @@ class Network {
                         e2.printStackTrace();
                     }
                 }
-                if (status_act == Const.GET_CARDS) {
+                else if (status_act == Const.GET_CARDS) {
                     try {
                         ArrayList<String> cards;
                         cards = Card.getCard();
@@ -229,6 +234,14 @@ class Network {
                     String res = info.getInfo(Thread.currentThread().getName());
                     outWriteString(res);
                 }
+                else if (status_act == Const.GET_STATS) {
+                    try {
+                        outWriteString(curLogin + '#' + GameUser.getWinsAndLoses(curLogin));
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
                 else if (status_act != Const.EXIT) {
                     outWriteInt(-1);
                 }
@@ -251,20 +264,26 @@ class Info {
 
     public String getInfo(String name) {
         if (name.equals("Поток1")) {
-            return str2;
+            String buf = str2;
+            str2 = "-1";
+            return buf;
         }
         else if (name.equals("Поток2")) {
-            return str1;
+            String buf = str1;
+            str1 = "-1";
+            return buf;
         }
         return "-1";
     }
 
     public void sendInfo(String name, String str_p) {
         if (name.equals("Поток1")) {
-            str1 = str_p;
+            if (str1.equals("-1")) str1 = str_p;
+            else str1 += '#' + str_p;
         }
         else if (name.equals("Поток2")) {
-            str2 = str_p;
+            if (str2.equals("-1")) str2 = str_p;
+            else str2 += '#' + str_p;
         }
     }
 }
