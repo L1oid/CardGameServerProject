@@ -226,6 +226,7 @@ class Network {
                     System.out.println(Thread.currentThread().getName());
                     outWriteInt(1);
                     inReadString();
+                    outWriteInt(1);
                     Info info = Info.getInstance();
                     info.sendInfo(Thread.currentThread().getName(), answerString);
                 }
@@ -254,7 +255,12 @@ class Info {
     public String str1;
     public String str2;
     private static Info instance;
-    private Info() {};
+
+    private Info() {
+        str1 = "-1";
+        str2 = "-1";
+    }
+
     public static Info getInstance() {
         if(instance == null) {
             instance = new Info();
